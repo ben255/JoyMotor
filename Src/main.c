@@ -57,6 +57,9 @@ int rank = 0;
 uint32_t x_in = 0;
 uint32_t y_in = 0;
 
+uint8_t step = 1;
+uint8_t resetPins = 0;
+
 uint8_t printData[40];
 /* USER CODE END PV */
 
@@ -76,7 +79,90 @@ void HAL_TIM_MspPostInit(TIM_HandleTypeDef *htim);
 /* Private function prototypes -----------------------------------------------*/
 
 void set_pulse_width(float pw_time){
+	pw_time = (pw_time/20) * 64161;
 	__HAL_TIM_SET_COMPARE(&htim10, TIM_CHANNEL_1, pw_time);
+}
+
+void step_motor(int dir){
+	  sprintf(printData, "STEP: %d\n\r", step);
+	  HAL_UART_Transmit(&huart2,printData, strlen(printData), 100);
+
+
+	if(dir == 1)
+		switch(step){
+		case 1:{
+			HAL_GPIO_WritePin(GPIOC, IN1_Pin, 0);
+			HAL_GPIO_WritePin(GPIOC, IN2_Pin, 1);
+			HAL_GPIO_WritePin(GPIOC, IN3_Pin, 0);
+			HAL_GPIO_WritePin(GPIOC, IN4_Pin, 0);
+			step = 2;
+			break;
+		}
+		case 2:{
+			HAL_GPIO_WritePin(GPIOC, IN1_Pin, 0);
+			HAL_GPIO_WritePin(GPIOC, IN2_Pin, 0);
+			HAL_GPIO_WritePin(GPIOC, IN3_Pin, 1);
+			HAL_GPIO_WritePin(GPIOC, IN4_Pin, 0);
+			step = 4;
+			break;
+		}
+		case 4:{
+			HAL_GPIO_WritePin(GPIOC, IN1_Pin, 0);
+			HAL_GPIO_WritePin(GPIOC, IN2_Pin, 0);
+			HAL_GPIO_WritePin(GPIOC, IN3_Pin, 0);
+			HAL_GPIO_WritePin(GPIOC, IN4_Pin, 1);
+			step = 8;
+			break;
+		}
+		case 8:{
+			HAL_GPIO_WritePin(GPIOC, IN1_Pin, 1);
+			HAL_GPIO_WritePin(GPIOC, IN2_Pin, 0);
+			HAL_GPIO_WritePin(GPIOC, IN3_Pin, 0);
+			HAL_GPIO_WritePin(GPIOC, IN4_Pin, 0);
+			step = 1;
+			break;
+		}
+		}else if(dir == 2)
+			switch(step){
+			case 1:{
+				HAL_GPIO_WritePin(GPIOC, IN1_Pin, 0);
+				HAL_GPIO_WritePin(GPIOC, IN2_Pin, 0);
+				HAL_GPIO_WritePin(GPIOC, IN3_Pin, 0);
+				HAL_GPIO_WritePin(GPIOC, IN4_Pin, 1);
+				step = 8;
+				break;
+			}
+			case 2:{
+				HAL_GPIO_WritePin(GPIOC, IN1_Pin, 1);
+				HAL_GPIO_WritePin(GPIOC, IN2_Pin, 0);
+				HAL_GPIO_WritePin(GPIOC, IN3_Pin, 0);
+				HAL_GPIO_WritePin(GPIOC, IN4_Pin, 0);
+				step = 1;
+				break;
+			}
+			case 4:{
+				HAL_GPIO_WritePin(GPIOC, IN1_Pin, 0);
+				HAL_GPIO_WritePin(GPIOC, IN2_Pin, 1);
+				HAL_GPIO_WritePin(GPIOC, IN3_Pin, 0);
+				HAL_GPIO_WritePin(GPIOC, IN4_Pin, 0);
+				step = 2;
+				break;
+			}
+			case 8:{
+				HAL_GPIO_WritePin(GPIOC, IN1_Pin, 0);
+				HAL_GPIO_WritePin(GPIOC, IN2_Pin, 0);
+				HAL_GPIO_WritePin(GPIOC, IN3_Pin, 1);
+				HAL_GPIO_WritePin(GPIOC, IN4_Pin, 0);
+				step = 4;
+				break;
+			}
+			}
+
+
+
+	HAL_Delay(2);
+
+
 }
 
 /* USER CODE END PFP */
@@ -131,14 +217,28 @@ int main(void)
 	  if(HAL_ADC_PollForConversion(&hadc1, HAL_MAX_DELAY) == HAL_OK){
 	  	x_in = HAL_ADC_GetValue(&hadc1);
 	  	if(HAL_ADC_PollForConversion(&hadc1, HAL_MAX_DELAY) == HAL_OK){
-	  		y_in= HAL_ADC_GetValue(&hadc1);
+	  		y_in = HAL_ADC_GetValue(&hadc1);
 	  	}
 	  }
+
 	  HAL_ADC_Stop(&hadc1);
 
-	  set_pulse_width(2);
-	  sprintf(printData, "X: %d, Y: %d\n\r", x_in, y_in);
-	  HAL_UART_Transmit(&huart2,printData, strlen(printData), 100);
+	  if(x_in < 30)
+		  set_pulse_width(1);
+	  else if(x_in > 4000)
+		  set_pulse_width(2);
+	  else
+		  set_pulse_width(0);
+
+	  if(y_in < 30)
+		  step_motor(1);
+	  else if(y_in > 4000)
+		  step_motor(2);
+	  else
+		  step_motor(0);
+
+		HAL_Delay(10);
+
 
 
   /* USER CODE END WHILE */
@@ -327,6 +427,9 @@ static void MX_GPIO_Init(void)
   __HAL_RCC_GPIOB_CLK_ENABLE();
 
   /*Configure GPIO pin Output Level */
+  HAL_GPIO_WritePin(GPIOC, IN1_Pin|IN2_Pin|IN3_Pin|IN4_Pin, GPIO_PIN_RESET);
+
+  /*Configure GPIO pin Output Level */
   HAL_GPIO_WritePin(LD2_GPIO_Port, LD2_Pin, GPIO_PIN_RESET);
 
   /*Configure GPIO pin : B1_Pin */
@@ -334,6 +437,13 @@ static void MX_GPIO_Init(void)
   GPIO_InitStruct.Mode = GPIO_MODE_IT_FALLING;
   GPIO_InitStruct.Pull = GPIO_NOPULL;
   HAL_GPIO_Init(B1_GPIO_Port, &GPIO_InitStruct);
+
+  /*Configure GPIO pins : IN1_Pin IN2_Pin IN3_Pin IN4_Pin */
+  GPIO_InitStruct.Pin = IN1_Pin|IN2_Pin|IN3_Pin|IN4_Pin;
+  GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
+  GPIO_InitStruct.Pull = GPIO_NOPULL;
+  GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
+  HAL_GPIO_Init(GPIOC, &GPIO_InitStruct);
 
   /*Configure GPIO pin : LD2_Pin */
   GPIO_InitStruct.Pin = LD2_Pin;

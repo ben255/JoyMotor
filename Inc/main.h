@@ -51,6 +51,14 @@
 
 #define B1_Pin GPIO_PIN_13
 #define B1_GPIO_Port GPIOC
+#define IN1_Pin GPIO_PIN_0
+#define IN1_GPIO_Port GPIOC
+#define IN2_Pin GPIO_PIN_1
+#define IN2_GPIO_Port GPIOC
+#define IN3_Pin GPIO_PIN_2
+#define IN3_GPIO_Port GPIOC
+#define IN4_Pin GPIO_PIN_3
+#define IN4_GPIO_Port GPIOC
 #define USART_TX_Pin GPIO_PIN_2
 #define USART_TX_GPIO_Port GPIOA
 #define USART_RX_Pin GPIO_PIN_3
