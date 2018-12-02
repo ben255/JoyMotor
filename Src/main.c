@@ -57,7 +57,7 @@ int rank = 0;
 uint32_t x_in = 0;
 uint32_t y_in = 0;
 
-uint8_t step = 1;
+uint8_t step = 0;
 uint8_t resetPins = 0;
 
 uint8_t printData[40];
@@ -87,8 +87,7 @@ void step_motor(int dir){
 	  sprintf(printData, "STEP: %d\n\r", step);
 	  HAL_UART_Transmit(&huart2,printData, strlen(printData), 100);
 
-
-	if(dir == 1)
+	if(dir == 1 && step != 0)
 		switch(step){
 		case 1:{
 			HAL_GPIO_WritePin(GPIOC, IN1_Pin, 0);
@@ -122,7 +121,7 @@ void step_motor(int dir){
 			step = 1;
 			break;
 		}
-		}else if(dir == 2)
+		}else if(dir == 2 && step != 0)
 			switch(step){
 			case 1:{
 				HAL_GPIO_WritePin(GPIOC, IN1_Pin, 0);
@@ -157,6 +156,13 @@ void step_motor(int dir){
 				break;
 			}
 			}
+	if(step == 0){
+		HAL_GPIO_WritePin(GPIOC, IN1_Pin, 1);
+		HAL_GPIO_WritePin(GPIOC, IN2_Pin, 0);
+		HAL_GPIO_WritePin(GPIOC, IN3_Pin, 0);
+		HAL_GPIO_WritePin(GPIOC, IN4_Pin, 0);
+		step = 1;
+	}
 
 
 
@@ -234,10 +240,7 @@ int main(void)
 		  step_motor(1);
 	  else if(y_in > 4000)
 		  step_motor(2);
-	  else
-		  step_motor(0);
 
-		HAL_Delay(10);
 
 
 
