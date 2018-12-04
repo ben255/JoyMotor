@@ -165,7 +165,6 @@ void step_motor(int dir){
 	}
 
 
-
 	HAL_Delay(2);
 
 
