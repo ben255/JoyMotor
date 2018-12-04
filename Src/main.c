@@ -84,8 +84,6 @@ void set_pulse_width(float pw_time){
 }
 
 void step_motor(int dir){
-	  sprintf(printData, "STEP: %d\n\r", step);
-	  HAL_UART_Transmit(&huart2,printData, strlen(printData), 100);
 
 	if(dir == 1 && step != 0)
 		switch(step){
@@ -212,6 +210,9 @@ int main(void)
   /* USER CODE BEGIN 2 */
   HAL_TIM_PWM_Start(&htim10, TIM_CHANNEL_1);
 
+  float toMove;
+  toMove = 2.0/4090.0;
+
   /* USER CODE END 2 */
 
   /* Infinite loop */
@@ -228,18 +229,31 @@ int main(void)
 
 	  HAL_ADC_Stop(&hadc1);
 
-	  if(x_in < 30)
+
+/*
+	  if(x_in <= 500)
+		  set_pulse_width(0.5);
+	  else if(x_in <= 1800 && x_in > 500)
 		  set_pulse_width(1);
-	  else if(x_in > 4000)
+	  else if(x_in <= 2200 && x_in > 1800)
+		  set_pulse_width(1.5);
+	  else if(x_in <= 3500  && x_in > 2200)
 		  set_pulse_width(2);
-	  else
-		  set_pulse_width(0);
+	  else if(x_in > 3500)
+		  set_pulse_width(2.5);*/
+
+
+	  set_pulse_width(0.5+(toMove*x_in));
 
 	  if(y_in < 30)
 		  step_motor(1);
 	  else if(y_in > 4000)
 		  step_motor(2);
 
+
+
+	  sprintf(printData, "STEP: %d\n\r", 5);
+	  HAL_UART_Transmit(&huart2,printData, strlen(printData), 100);
 
 
 
